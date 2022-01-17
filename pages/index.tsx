@@ -1,9 +1,10 @@
-import type { NextPage } from 'next'
+import type {GetServerSideProps, InferGetServerSidePropsType, NextPage} from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import {createInstance} from "@optimizely/optimizely-sdk";
 
-const Home: NextPage = () => {
+const Home: NextPage = ({ data }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   return (
     <div className={styles.container}>
       <Head>
@@ -67,6 +68,30 @@ const Home: NextPage = () => {
       </footer>
     </div>
   )
+}
+
+export const fetchOptimizelyData = async (): Promise<object | null> => {
+  const response = await fetch(`https://cdn.optimizely.com/datafiles/{OPTIMIZELY_KEY}.json`)
+
+  if (!response.ok) {
+    return null
+  }
+
+  return response.json()
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const datafile = await fetchOptimizelyData()
+  if (datafile) {
+    createInstance({
+      datafile
+    })
+  }
+  return {
+    props: {
+      datafile
+    }
+  }
 }
 
 export default Home
